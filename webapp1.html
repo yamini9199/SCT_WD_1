@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-Do App</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: rgba(15, 23, 42, 0.92);
+      --text: #eff6ff;
+      --muted: #bfdbfe;
+      --accent: #38bdf8;
+      --accent2: #818cf8;
+      --done: #86efac;
+      --danger: #fca5a5;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: linear-gradient(135deg, #020617, #111827 35%, #172554 100%);
+      color: var(--text);
+    }
+    .app {
+      width: min(100%, 900px);
+      background: var(--card);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 18px 40px rgba(2, 6, 23, 0.35);
+    }
+    h1 { font-size: 1.8rem; margin-bottom: 8px; }
+    .subtitle { color: var(--muted); margin-bottom: 14px; }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 180px 180px auto;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    input, button {
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      padding: 10px;
+      font-size: 0.98rem;
+    }
+    input { background: rgba(255,255,255,0.96); color: #111827; }
+    button {
+      cursor: pointer;
+      border: none;
+      color: #fff;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+    button:hover { transform: translateY(-1px); }
+    .task-list { display: grid; gap: 10px; }
+    .task {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto auto;
+      gap: 10px;
+      align-items: center;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 14px;
+      padding: 10px;
+    }
+    .task.done .task-text { text-decoration: line-through; color: #bbf7d0; }
+    .task-date { color: #bfdbfe; font-size: 0.92rem; }
+    .mini-btn {
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: rgba(148,163,184,0.16);
+      color: var(--text);
+      border: 1px solid rgba(148,163,184,0.18);
+    }
+    .mini-btn.danger { background: rgba(248,113,113,0.16); border-color: rgba(248,113,113,0.25); }
+    .empty { color: var(--muted); text-align: center; padding: 12px; }
+    @media (max-width: 820px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .task { grid-template-columns: auto 1fr; }
+      .task .actions { grid-column: 2; display: flex; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <h1>To-Do App</h1>
+    <p class="subtitle">Add tasks, mark them complete, edit them, and set a date and time.</p>
+
+    <div class="form-grid">
+      <input id="taskInput" type="text" placeholder="Enter a task" />
+      <input id="taskDate" type="datetime-local" />
+      <button id="addBtn" type="button">Add Task</button>
+      <button id="clearBtn" type="button" style="background: linear-gradient(135deg, #fb7185, #f472b6);">Clear All</button>
+    </div>
+
+    <section id="taskList" class="task-list"></section>
+  </main>
+
+  <script>
+    const taskInput = document.getElementById('taskInput');
+    const taskDate = document.getElementById('taskDate');
+    const addBtn = document.getElementById('addBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const taskList = document.getElementById('taskList');
+
+    let tasks = JSON.parse(localStorage.getItem('todoTasks') || '[]');
+
+    function saveTasks() {
+      localStorage.setItem('todoTasks', JSON.stringify(tasks));
+      renderTasks();
+    }
+
+    function renderTasks() {
+      taskList.innerHTML = '';
+
+      if (tasks.length === 0) {
+        taskList.innerHTML = '<div class="empty">No tasks yet. Add one above.</div>';
+        return;
+      }
+
+      tasks.forEach((task, index) => {
+        const row = document.createElement('div');
+        row.className = `task ${task.done ? 'done' : ''}`;
+
+        const check = document.createElement('input');
+        check.type = 'checkbox';
+        check.checked = task.done;
+        check.addEventListener('change', () => {
+          tasks[index].done = check.checked;
+          saveTasks();
+        });
+
+        const text = document.createElement('div');
+        text.className = 'task-text';
+        text.textContent = task.text;
+
+        const date = document.createElement('div');
+        date.className = 'task-date';
+        date.textContent = task.date ? `⏰ ${new Date(task.date).toLocaleString()}` : 'No date/time set';
+
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        const editBtn = document.createElement('button');
+        editBtn.className = 'mini-btn';
+        editBtn.textContent = 'Edit';
+        editBtn.addEventListener('click', () => {
+          const newText = prompt('Edit task', task.text);
+          if (newText && newText.trim()) {
+            tasks[index].text = newText.trim();
+            saveTasks();
+          }
+        });
+
+        const dateBtn = document.createElement('button');
+        dateBtn.className = 'mini-btn';
+        dateBtn.textContent = 'Set Date';
+        dateBtn.addEventListener('click', () => {
+          const value = prompt('Enter date and time (YYYY-MM-DDTHH:MM)', task.date || '');
+          if (value) {
+            tasks[index].date = value;
+            saveTasks();
+          }
+        });
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'mini-btn danger';
+        delBtn.textContent = 'Delete';
+        delBtn.addEventListener('click', () => {
+          tasks.splice(index, 1);
+          saveTasks();
+        });
+
+        actions.append(editBtn, dateBtn, delBtn);
+        row.append(check, text, date, actions);
+        taskList.appendChild(row);
+      });
+    }
+
+    addBtn.addEventListener('click', () => {
+      const text = taskInput.value.trim();
+      if (!text) return;
+      tasks.unshift({ text, date: taskDate.value || '', done: false });
+      taskInput.value = '';
+      taskDate.value = '';
+      saveTasks();
+    });
+
+    clearBtn.addEventListener('click', () => {
+      if (confirm('Clear all tasks?')) {
+        tasks = [];
+        saveTasks();
+      }
+    });
+
+    renderTasks();
+  </script>
+</body>
+</html>

@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Science Quiz Game</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(8, 15, 28, 0.88);
+      --text: #eff6ff;
+      --muted: #dbeafe;
+      --accent: #22d3ee;
+      --accent2: #a78bfa;
+      --good: #86efac;
+      --bad: #fca5a5;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background:
+        linear-gradient(rgba(6, 10, 23, 0.68), rgba(15, 23, 42, 0.78)),
+        url('https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat fixed;
+    }
+
+    .app {
+      width: min(100%, 900px);
+      background: var(--panel);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 24px;
+      box-shadow: 0 18px 40px rgba(8, 15, 28, 0.35);
+      padding: 22px;
+      backdrop-filter: blur(8px);
+    }
+
+    h1 { font-size: 1.9rem; margin-bottom: 8px; }
+    .subtitle { color: var(--muted); margin-bottom: 14px; }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 999px;
+      color: #cffafe;
+      font-size: 0.92rem;
+      margin-bottom: 10px;
+    }
+
+    .question-card {
+      background: linear-gradient(145deg, rgba(15, 23, 42, 0.98), rgba(17, 24, 39, 0.98));
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: 0 10px 18px rgba(8, 15, 28, 0.28);
+    }
+
+    .progress { color: #bfdbfe; font-weight: 700; margin-bottom: 8px; }
+    .question { font-size: 1.08rem; font-weight: 700; margin-bottom: 10px; }
+    .type { color: #67e8f9; font-size: 0.95rem; margin-bottom: 8px; }
+
+    .options { display: grid; gap: 8px; }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      padding: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      cursor: pointer;
+      transition: border-color 0.18s ease, transform 0.18s ease;
+    }
+    label:hover { border-color: rgba(192, 132, 252, 0.45); transform: translateY(-1px); }
+    input[type="radio"], input[type="checkbox"] { accent-color: #38bdf8; }
+
+    .blank-input {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      background: rgba(255, 255, 255, 0.98);
+      color: #111827;
+      padding: 10px;
+      margin-top: 6px;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 8px 16px rgba(56, 189, 248, 0.18);
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+    button:hover { transform: translateY(-1px); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .result {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      color: #eff6ff;
+      display: none;
+    }
+    .result.show { display: block; }
+
+    .review-list { display: grid; gap: 8px; margin-top: 10px; }
+    .review-item {
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: rgba(8, 15, 28, 0.96);
+    }
+    .review-item.correct { border-color: rgba(134, 239, 172, 0.35); }
+    .review-item.wrong { border-color: rgba(248, 113, 113, 0.35); }
+    .muted { color: #bfdbfe; }
+    .answer-good { color: #bbf7d0; font-weight: 700; }
+    .answer-bad { color: #fecaca; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <div class="badge">Science Fun Quiz</div>
+    <h1>Interactive Science Quiz Game</h1>
+    <p class="subtitle">Answer one question at a time. Submit to see your score and the correct answers.</p>
+
+    <section id="quizCard" class="question-card"></section>
+
+    <div class="controls">
+      <button id="nextBtn" type="button">Next Question</button>
+      <button id="submitBtn" type="button">Submit Quiz</button>
+      <button id="resetBtn" type="button" style="background: linear-gradient(135deg, #fb7185, #f472b6);">Reset</button>
+    </div>
+
+    <div id="resultBox" class="result"></div>
+  </main>
+
+  <script>
+    const questions = [
+      {
+        type: 'single',
+        question: 'Which planet is known as the Red Planet?',
+        options: ['Mars', 'Venus', 'Mercury', 'Jupiter'],
+        answer: ['Mars']
+      },
+      {
+        type: 'multi',
+        question: 'Select all the parts of a plant.',
+        options: ['Root', 'Leaf', 'Engine', 'Stem'],
+        answer: ['Root', 'Leaf', 'Stem']
+      },
+      {
+        type: 'fill',
+        question: 'The gas we breathe in is called ___.',
+        answer: ['oxygen']
+      },
+      {
+        type: 'truefalse',
+        question: 'The Sun is a star.',
+        options: ['True', 'False'],
+        answer: ['True']
+      },
+      {
+        type: 'single',
+        question: 'What do we call the force that pulls objects toward Earth?',
+        options: ['Magnetism', 'Gravity', 'Friction', 'Sound'],
+        answer: ['Gravity']
+      }
+    ];
+
+    const quizCard = document.getElementById('quizCard');
+    const resultBox = document.getElementById('resultBox');
+    const nextBtn = document.getElementById('nextBtn');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    let currentQuestionIndex = 0;
+    let submitted = false;
+    const answers = Array(questions.length).fill(null);
+
+    function normalize(text) {
+      return (text || '').trim().toLowerCase();
+    }
+
+    function getCurrentAnswer() {
+      const q = questions[currentQuestionIndex];
+      if (!q) return null;
+
+      if (q.type === 'fill') {
+        const input = quizCard.querySelector('.blank-input');
+        return normalize(input ? input.value : '');
+      }
+
+      const selected = [...quizCard.querySelectorAll('input:checked')].map(x => normalize(x.value));
+      return selected;
+    }
+
+    function saveCurrentAnswer() {
+      answers[currentQuestionIndex] = getCurrentAnswer();
+    }
+
+    function renderQuestion() {
+      const q = questions[currentQuestionIndex];
+      if (!q) return;
+
+      quizCard.innerHTML = '';
+
+      const progress = document.createElement('div');
+      progress.className = 'progress';
+      progress.textContent = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+
+      const question = document.createElement('div');
+      question.className = 'question';
+      question.textContent = q.question;
+
+      const type = document.createElement('div');
+      type.className = 'type';
+      type.textContent = q.type === 'single' ? 'Single Select' : q.type === 'multi' ? 'Multi Select' : q.type === 'truefalse' ? 'True or False' : 'Fill in the Blank';
+
+      quizCard.appendChild(progress);
+      quizCard.appendChild(question);
+      quizCard.appendChild(type);
+
+      if (q.type === 'fill') {
+        const input = document.createElement('input');
+        input.className = 'blank-input';
+        input.type = 'text';
+        input.placeholder = 'Type your answer here';
+        input.value = Array.isArray(answers[currentQuestionIndex]) ? '' : (answers[currentQuestionIndex] || '');
+        input.addEventListener('input', saveCurrentAnswer);
+        quizCard.appendChild(input);
+      } else {
+        const options = document.createElement('div');
+        options.className = 'options';
+
+        q.options.forEach(option => {
+          const label = document.createElement('label');
+          const input = document.createElement('input');
+          input.type = q.type === 'multi' ? 'checkbox' : 'radio';
+          input.name = `q${currentQuestionIndex}`;
+          input.value = option;
+          const savedAnswers = Array.isArray(answers[currentQuestionIndex])
+            ? answers[currentQuestionIndex]
+            : [answers[currentQuestionIndex]];
+          input.checked = savedAnswers.some(v => normalize(v) === normalize(option));
+          input.addEventListener('change', saveCurrentAnswer);
+          label.appendChild(input);
+          label.appendChild(document.createTextNode(option));
+          options.appendChild(label);
+        });
+
+        quizCard.appendChild(options);
+      }
+
+      nextBtn.disabled = currentQuestionIndex === questions.length - 1 || submitted;
+      submitBtn.disabled = submitted;
+    }
+
+    function checkAnswer(q, given) {
+      const correct = q.answer.map(normalize);
+
+      if (q.type === 'fill') {
+        return normalize(given) === correct[0];
+      }
+
+      const givenList = Array.isArray(given) ? given : [normalize(given)];
+      const sortedGiven = [...givenList].filter(Boolean).sort();
+      const sortedCorrect = [...correct].sort();
+      return sortedGiven.length === sortedCorrect.length && sortedGiven.every((item, i) => item === sortedCorrect[i]);
+    }
+
+    function calculateScore() {
+      let score = 0;
+      const review = [];
+
+      questions.forEach((q, index) => {
+        const given = answers[index];
+        const answerText = Array.isArray(given) ? given.join(', ') : (given || 'No answer selected');
+        const correct = q.answer.join(', ');
+        const isCorrect = checkAnswer(q, given);
+
+        if (isCorrect) score += 1;
+
+        review.push({
+          question: q.question,
+          correct,
+          yourAnswer: answerText || 'No answer selected',
+          isCorrect
+        });
+      });
+
+      return { score, review };
+    }
+
+    function showReview() {
+      const { score, review } = calculateScore();
+      const total = questions.length;
+
+      resultBox.classList.add('show');
+      resultBox.innerHTML = `<div><strong>You scored ${score} out of ${total}.</strong></div>`;
+
+      const list = document.createElement('div');
+      list.className = 'review-list';
+
+      review.forEach(item => {
+        const row = document.createElement('div');
+        row.className = `review-item ${item.isCorrect ? 'correct' : 'wrong'}`;
+        row.innerHTML = `
+          <div><strong>${item.question}</strong></div>
+          <div class="muted">Your answer: <span class="${item.isCorrect ? 'answer-good' : 'answer-bad'}">${item.yourAnswer}</span></div>
+          <div class="muted">Correct answer: ${item.correct}</div>
+        `;
+        list.appendChild(row);
+      });
+
+      resultBox.appendChild(list);
+    }
+
+    nextBtn.addEventListener('click', () => {
+      if (currentQuestionIndex < questions.length - 1) {
+        currentQuestionIndex += 1;
+        resultBox.classList.remove('show');
+        resultBox.innerHTML = '';
+        renderQuestion();
+      }
+    });
+
+    submitBtn.addEventListener('click', () => {
+      submitted = true;
+      showReview();
+      renderQuestion();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      currentQuestionIndex = 0;
+      submitted = false;
+      answers.fill(null);
+      resultBox.classList.remove('show');
+      resultBox.innerHTML = '';
+      renderQuestion();
+    });
+
+    renderQuestion();
+  </script>
+</body>
+</html>
